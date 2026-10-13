@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RelayPlan",
+  "description": "Codex -> WorkBuddy. The execution plan Codex authored and WorkBuddy must follow.",
+  "type": "object",
+  "required": ["objective", "assumptions", "steps", "acceptance_criteria", "risks"],
+  "additionalProperties": false,
+  "properties": {
+    "objective": {
+      "type": "string",
+      "description": "One-sentence restatement of the goal, as Codex understood it."
+    },
+    "assumptions": {
+      "type": "array",
+      "description": "What Codex assumed that the task brief did not state. Empty array if none. Use null only if impossible.",
+      "items": { "type": "string" }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Execution order. Ids must be contiguous from 1.",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "command", "cwd", "expected_effect", "requires_confirmation"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "1-based execution order, contiguous with no gaps."
+          },
+          "description": {
+            "type": "string",
+            "description": "What this step accomplishes, in plain language."
+          },
+          "command": {
+            "type": "string",
+            "description": "Exact shell command for WorkBuddy to run. No placeholders."
+          },
+          "cwd": {
+            "type": ["string", "null"],
+            "description": "Working directory relative to the plan's --cwd, or null for the default."
+          },
+          "expected_effect": {
+            "type": "string",
+            "description": "Observable change that proves the step worked. Must be checkable from captured stdout/stderr."
+          },
+          "requires_confirmation": {
+            "type": "boolean",
+            "description": "true when the step is destructive or hard to reverse; WorkBuddy must ask the user first."
+          }
+        }
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Conditions the reviewer can check from captured stdout/stderr and exit codes alone.",
+      "items": { "type": "string" }
+    },
+    "risks": {
+      "type": "array",
+      "description": "Known hazards. Empty array if none.",
+      "items": {
+        "type": "object",
+        "required": ["risk", "mitigation"],
+        "additionalProperties": false,
+        "properties": {
+          "risk": { "type": "string" },
+          "mitigation": { "type": "string" }
+        }
+      }
+    }
+  }
+}

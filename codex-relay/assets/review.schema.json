@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RelayReview",
+  "description": "Codex -> WorkBuddy. The reviewer's judgement of a sealed execution report.",
+  "type": "object",
+  "required": ["verdict", "summary", "findings", "acceptance_check", "next_action"],
+  "additionalProperties": false,
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["approved", "needs_revision", "rejected"],
+      "description": "approved = plan met and evidence suffices; needs_revision = a specific step failed or drifted; rejected = the approach itself is wrong."
+    },
+    "summary": {
+      "type": "string",
+      "description": "2-4 sentences on what the evidence shows."
+    },
+    "findings": {
+      "type": "array",
+      "description": "One entry per planned step. Must cover every step id in the plan.",
+      "items": {
+        "type": "object",
+        "required": ["step_id", "status", "comment", "evidence_checked"],
+        "additionalProperties": false,
+        "properties": {
+          "step_id": { "type": "integer" },
+          "status": {
+            "type": "string",
+            "enum": ["met", "not_met", "deviated", "unverifiable"]
+          },
+          "comment": { "type": "string" },
+          "evidence_checked": {
+            "type": ["string", "null"],
+            "description": "Which part of the report supports this finding; null if none did."
+          }
+        }
+      }
+    },
+    "acceptance_check": {
+      "type": "array",
+      "description": "One entry per acceptance criterion from the plan.",
+      "items": {
+        "type": "object",
+        "required": ["criterion", "satisfied", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "criterion": { "type": "string" },
+          "satisfied": { "type": "boolean" },
+          "reason": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "description": "On needs_revision: the specific corrective step to re-plan. On approved: what the user should look at."
+    }
+  }
+}

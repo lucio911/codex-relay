@@ -123,10 +123,17 @@ Field-level detail: `references/protocol.md`. Codex's approval criteria: `refere
 
 ## Practical notes (all verified on this machine)
 
-- **Do not pass `--model` unless you must.** A model pinned in `~/.codex/config.toml` or in
-  `--model` is often rejected by ChatGPT-account tiers with
-  `400 ... model is not supported`. Here `gpt-6.1-sol` and `gpt-5.1-codex-max` both fail while the
-  bare default succeeds. The script therefore sends no `-m` flag unless you pass one.
+- **Default model is pinned to `gpt-5.6-sol` with `model_reasoning_effort=xhigh`.** The
+  `gpt-6.1` family (incl. `gpt-6.1-high`, `gpt-6.1-sol`) returns
+  `400 model_not_found` on this ChatGPT account — verified via `codex exec -m` on 2026-11-05 —
+  so it cannot be used through Codex. `gpt-5.6-sol` is the strongest model in the account's
+  available catalog and is verified working through the relay's own
+  (`--ignore-user-config -m`) path. Reasoning effort is forced via `-c` because
+  `--ignore-user-config` drops the local `config.toml` pin. Override per-call with `--model <id>`
+  if your account later supports a stronger model.
+- **A locally pinned model can still be rejected.** If you point `--model` at an id your
+  ChatGPT-account tier does not support, Codex answers `400 ... model is not supported` /
+  `model_not_found`; the script detects this via `MODEL_REJECTED` and stops rather than retrying.
 - **`--ignore-user-config` is always sent.** `~/.codex/config.toml` registers six MCP servers;
   they add ~40s per call and `@modelcontextprotocol/server-memory` fails against `chatgpt.com`,
   aborting the run. This also drops the unusable local model pin.

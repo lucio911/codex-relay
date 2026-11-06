@@ -29,10 +29,18 @@ ASSETS = Path(__file__).resolve().parent.parent / "assets"
 PLAN_SCHEMA = ASSETS / "plan.schema.json"
 REVIEW_SCHEMA = ASSETS / "review.schema.json"
 
-DEFAULT_MODEL = ""   # no -m flag: let codex pick a model its account can actually use
-DEFAULT_MODEL_HELP = ("Codex model id. Empty (default) sends no -m flag, letting codex fall back "
-                      "to a model the signed-in account supports -- safest, since a locally pinned "
-                      "model is often rejected by ChatGPT-account tiers.")
+# Pinned: the gpt-6.1 family (incl. gpt-6.1-high, gpt-6.1-sol) returns
+# `model_not_found` on this ChatGPT account (verified 2026-11-05 via `codex exec -m`),
+# so it cannot be used. `gpt-5.6-sol` is the strongest model in the account's available
+# catalog and is verified working through the same `--ignore-user-config -m` path the
+# relay uses. Reasoning effort is forced via -c below because `--ignore-user-config`
+# drops the local config.toml pin.
+DEFAULT_MODEL = "gpt-5.6-sol"
+DEFAULT_REASONING_EFFORT = "xhigh"
+DEFAULT_MODEL_HELP = ("Codex model id. Pinned to gpt-5.6-sol: the gpt-6.1 family is unavailable on "
+                      "this ChatGPT account (model_not_found), while gpt-5.6-sol is verified working. "
+                      "Reasoning effort is forced to xhigh via -c for deep review. Override per-call "
+                      "with --model <id> if your account later supports a stronger model.")
 MAX_ITERATIONS = 3
 STDOUT_LIMIT = 4000
 DEFAULT_TIMEOUT = 900
@@ -243,7 +251,10 @@ def run_codex(prompt: str, schema_path: Path, cwd: str, resume: str | None,
         # Flags accepted by both `codex exec` and `codex exec resume`.
         shared = [
             "--skip-git-repo-check",
-            "--ignore-user-config",   # skips MCP servers + unusable local model
+            "--ignore-user-config",   # skips MCP servers + unusable local model pin
+            # Force deep reasoning: --ignore-user-config drops the local
+            # config.toml `model_reasoning_effort` pin, so set it explicitly.
+            "-c", f"model_reasoning_effort={DEFAULT_REASONING_EFFORT}",
             "--output-schema", str(schema_path),
         ]
         # `resume` has its own parser and rejects --sandbox / -C / --color, so these
